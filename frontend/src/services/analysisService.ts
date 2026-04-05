@@ -48,6 +48,34 @@ export async function getUserAnalysisHistory(): Promise<AnalysisHistoryItem[]> {
   return response.data.reports || [];
 }
 
+export async function trainModel(sessionId: string) {
+  const response = await httpClient.post(`/api/analysis/${sessionId}/train`, null, {
+    timeout: 120000,
+  });
+  return response.data;
+}
+
+export async function getTrainingResult(sessionId: string) {
+  const response = await httpClient.get(`/api/analysis/${sessionId}/training`);
+  return response.data;
+}
+
+export async function getTrainingHistory(): Promise<TrainingHistoryItem[]> {
+  const response = await httpClient.get("/api/training/history");
+  return response.data.results || [];
+}
+
+export interface TrainingHistoryItem {
+  id: string;
+  session_id: string;
+  dataset_name: string | null;
+  created_at: string | null;
+  problem_type: string | null;
+  model_trained: string | null;
+  metrics: Record<string, number> | null;
+  status: string;
+}
+
 export interface AnalysisHistoryItem {
   id: string;
   filename: string | null;

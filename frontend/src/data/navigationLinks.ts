@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Brain,
   Database,
   Lightbulb,
   Sparkles,
@@ -23,6 +24,7 @@ export const NAV_LINKS: NavLink[] = [
   { id: "datasets", label: "Datasets", href: "/dataset", icon: Database },
   { id: "analysis", label: "Analysis", href: "/analysis", icon: BarChart3 },
   { id: "insights", label: "Insights", href: "/insights", icon: Lightbulb },
+  { id: "training", label: "Training", href: "/training", icon: Brain },
 ];
 
 export const FOOTER_LINKS = {

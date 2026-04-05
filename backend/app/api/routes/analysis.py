@@ -10,6 +10,7 @@ from app.api.deps import get_current_user
 from app.core.exceptions import NotFoundError, ValidationError
 from app.db import sqlite
 from app.schemas.responses import ReportListResponse, ReportSummary
+from app.services.ml_trainer import MLTrainer
 from app.services.orchestrator import AnalysisOrchestrator
 
 router = APIRouter(prefix="/api")
@@ -108,6 +109,9 @@ async def upload_csv(
         # Reuse completed analysis for same user+dataset when available.
         existing_session_id = sqlite.get_completed_session_for_dataset(user["id"], dataset_id)
         if existing_session_id:
+            # Backfill CSV storage for sessions created before training support
+            if not sqlite.get_dataset(existing_session_id):
+                sqlite.save_dataset(existing_session_id, content)
             return _load_user_report(user["id"], existing_session_id)
 
         # No duplicate found - proceed with heavy orchestration
@@ -140,6 +144,9 @@ async def upload_csv(
             created_at=timestamp_now,
             updated_at=_utc_now_iso(),
         )
+
+        # Persist raw CSV for model training
+        sqlite.save_dataset(session_id, content)
 
         sqlite.create_analysis_session(
             {
@@ -187,6 +194,87 @@ async def generate_narrative(session_id: str, user: Dict[str, Any] = Depends(get
 async def list_reports(user: Dict[str, Any] = Depends(get_current_user)):
     reports = sqlite.list_user_reports(user["id"], limit=20)
     return ReportListResponse(reports=[ReportSummary(**r) for r in reports])
+
+
+@router.post("/analysis/{session_id}/train")
+async def train_model(
+    session_id: str,
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Train the recommended model on the session's dataset."""
+    sqlite.ensure_user_owns_session(user["id"], session_id)
+
+    report = _get_analysis_payload(session_id)
+    ml_rec = report.get("ml_recommendation")
+    if not ml_rec:
+        raise ValidationError("No ML recommendation found for this session.")
+
+    csv_bytes = sqlite.get_dataset(session_id)
+    if not csv_bytes:
+        # Fallback: reconstruct from stored preview for legacy sessions
+        import io
+        import pandas as pd
+
+        preview = report.get("preview")
+        if not preview or len(preview) == 0:
+            raise ValidationError(
+                "Raw dataset not available for this session. "
+                "Please re-upload the dataset to enable training."
+            )
+        df = pd.DataFrame(preview)
+        buf = io.BytesIO()
+        df.to_csv(buf, index=False)
+        csv_bytes = buf.getvalue()
+
+    try:
+        result = MLTrainer.train(
+            csv_content=csv_bytes,
+            problem_type=ml_rec["problem_type"],
+            recommended_model=ml_rec["recommended_model"],
+            target_column=ml_rec.get("target_column"),
+            numeric_cols=report.get("numeric_columns", []),
+            category_cols=report.get("category_columns", []),
+        )
+    except (ValueError, RuntimeError) as e:
+        raise ValidationError(str(e))
+
+    # Persist training result
+    training_id = str(uuid.uuid4())
+    result["training_id"] = training_id
+    result["session_id"] = session_id
+    result["dataset_name"] = report.get("filename")
+
+    sqlite.save_training_result(
+        training_id=training_id,
+        session_id=session_id,
+        user_id=user["id"],
+        payload=result,
+        created_at=_utc_now_iso(),
+    )
+
+    return result
+
+
+@router.get("/analysis/{session_id}/training")
+async def get_training_result(
+    session_id: str,
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Get the training result for a session."""
+    sqlite.ensure_user_owns_session(user["id"], session_id)
+    result = sqlite.get_training_result(session_id)
+    if not result:
+        raise NotFoundError("No training results found for this session.")
+    return result
+
+
+@router.get("/training/history")
+async def list_training_history(
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """List all training results for the current user."""
+    results = sqlite.list_user_training_results(user["id"], limit=20)
+    return {"results": results}
 
 
 @router.get("/users/me/analyses", response_model=ReportListResponse)

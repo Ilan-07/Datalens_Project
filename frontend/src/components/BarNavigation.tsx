@@ -7,6 +7,7 @@ const navItems = [
     { id: '01', title: 'Analysis', href: '/analysis', color: '#B11226' },
     { id: '02', title: 'Dataset', href: '/dataset', color: '#888888' },
     { id: '03', title: 'Insights', href: '/insights', color: '#5A0E16' },
+    { id: '04', title: 'Training', href: '/training', color: '#6B21A8' },
 ];
 
 export const BarNavigation = () => {

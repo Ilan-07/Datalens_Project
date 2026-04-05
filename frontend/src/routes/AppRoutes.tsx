@@ -10,6 +10,7 @@ import InsightsPage from "@/app/insights/page";
 import ProfilePage from "@/app/profile/page";
 import { AboutPage, BlogPage, ContactPage } from "@/app/info/InfoPages";
 import { SignInPage, SignUpPage } from "@/app/auth/AuthPages";
+import TrainingPage from "@/app/training/page";
 import NotFoundPage from "@/app/not-found/NotFoundPage";
 
 const pageTransition = {
@@ -34,6 +35,7 @@ export function AppRoutes() {
 
           <Route path="/dataset" element={<DatasetPage />} />
           <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/training" element={<TrainingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />

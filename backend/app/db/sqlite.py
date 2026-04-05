@@ -92,6 +92,25 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_analysis_sessions_user_id ON analysis_sessions(user_id);
             CREATE INDEX IF NOT EXISTS idx_analysis_sessions_dataset_hash ON analysis_sessions(dataset_hash);
             CREATE INDEX IF NOT EXISTS idx_analysis_results_user_id ON analysis_results(user_id);
+
+            CREATE TABLE IF NOT EXISTS dataset_store (
+                session_id TEXT PRIMARY KEY,
+                csv_data BLOB NOT NULL,
+                FOREIGN KEY(session_id) REFERENCES analysis_sessions(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS training_results (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(session_id) REFERENCES analysis_sessions(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_training_results_session_id ON training_results(session_id);
+            CREATE INDEX IF NOT EXISTS idx_training_results_user_id ON training_results(user_id);
             """
         )
 
@@ -297,6 +316,87 @@ def list_user_reports(user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
         )
 
     return reports
+
+
+def save_dataset(session_id: str, csv_data: bytes) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO dataset_store (session_id, csv_data)
+            VALUES (?, ?)
+            ON CONFLICT(session_id) DO UPDATE SET csv_data = excluded.csv_data
+            """,
+            (session_id, csv_data),
+        )
+
+
+def get_dataset(session_id: str) -> Optional[bytes]:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT csv_data FROM dataset_store WHERE session_id = ?",
+            (session_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return bytes(row["csv_data"])
+
+
+def save_training_result(
+    training_id: str, session_id: str, user_id: str, payload: Dict[str, Any], created_at: str
+) -> None:
+    payload_json = _to_json(payload)
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO training_results (id, session_id, user_id, payload_json, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET payload_json = excluded.payload_json
+            """,
+            (training_id, session_id, user_id, payload_json, created_at),
+        )
+
+
+def get_training_result(session_id: str) -> Optional[Dict[str, Any]]:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT payload_json FROM training_results WHERE session_id = ? ORDER BY created_at DESC LIMIT 1",
+            (session_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return _from_json(row["payload_json"])
+
+
+def list_user_training_results(user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT t.id, t.session_id, t.payload_json, t.created_at, s.dataset_name
+            FROM training_results t
+            JOIN analysis_sessions s ON t.session_id = s.id
+            WHERE t.user_id = ?
+            ORDER BY t.created_at DESC
+            LIMIT ?
+            """,
+            (user_id, limit),
+        ).fetchall()
+
+    results: List[Dict[str, Any]] = []
+    for row in rows:
+        payload = _from_json(row["payload_json"]) if row["payload_json"] else {}
+        results.append(
+            {
+                "id": row["id"],
+                "session_id": row["session_id"],
+                "dataset_name": row["dataset_name"],
+                "created_at": row["created_at"],
+                "problem_type": payload.get("problem_type"),
+                "model_trained": payload.get("model_trained"),
+                "metrics": payload.get("metrics"),
+                "status": payload.get("status", "unknown"),
+            }
+        )
+    return results
 
 
 def ensure_user_owns_session(user_id: str, session_id: str) -> None:
