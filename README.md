@@ -12,6 +12,7 @@ Upload a CSV, get instant statistics, auto-generated charts, ML model recommenda
 - **Automated statistical analysis** — descriptive stats, correlations, distribution metrics, outlier detection
 - **Dynamic chart generation** — histograms, bar charts, scatter plots, heatmaps, and line charts generated from your data's structure
 - **ML model recommendations** — suggests the right algorithm (Random Forest, XGBoost, CatBoost, KMeans, etc.) based on dataset size, features, and problem type
+- **Training Lab** — one-click model training on uploaded datasets with evaluation metrics (accuracy, F1, R², MAE, RMSE, silhouette), feature importance rankings, and persistent training history
 - **Rule-based data quality insights** — missing values, multicollinearity, skewness, high cardinality, and more, ranked by severity
 - **Cinematic UI** — WebGL-powered 3D carousel, glitch effects, depth typography, and parallax animations built with Three.js and Framer Motion
 - **Session persistence** — analysis snapshots saved to localStorage with project history management
@@ -38,15 +39,18 @@ Upload a CSV, get instant statistics, auto-generated charts, ML model recommenda
 CSV Upload → Data Profiler → Stats Engine → Visualization Engine → ML Advisor → Insight Engine
                                                                                       ↓
                                                                           Comprehensive Report
+                                                                                      ↓
+                                                                    Training Lab (train recommended model)
 ```
 
-### Analysis Pipeline (5 engines)
+### Analysis Pipeline (6 engines)
 
 1. **Data Profiler** — Detects column types (numeric, categorical, datetime), computes missing values, memory usage, and dataset health score (0–100%)
 2. **Statistics Engine** — Mean, median, std, skewness, kurtosis, IQR, outlier detection for numerics; cardinality, entropy, top categories for categoricals; Pearson correlation matrix
 3. **Visualization Engine** — Auto-generates chart configs based on data types: histograms for distributions, bar charts for categories, scatter plots for top correlated pairs, heatmaps for correlation matrices
 4. **ML Advisor** — Analyzes problem statement + dataset characteristics to recommend models (e.g., small dataset → Random Forest, large → XGBoost, many categoricals → CatBoost)
 5. **Insight Engine** — Rule-based detection of data quality issues with severity scoring: missing values, multicollinearity (r > 0.8), heavy skewness, outlier prevalence, high cardinality columns
+6. **ML Trainer** — Trains the recommended model (Random Forest, Gradient Boosting, Logistic/Linear Regression, KMeans) on the dataset with automatic train/test split, label encoding, and evaluation metrics including feature importances
 
 ---
 
@@ -55,7 +59,7 @@ CSV Upload → Data Profiler → Stats Engine → Visualization Engine → ML Ad
 ```
 ├── frontend/                    # React + Vite SPA
 │   ├── src/
-│   │   ├── app/                 # Page components (landing, analysis, dataset, insights, profile, auth)
+│   │   ├── app/                 # Page components (landing, analysis, dataset, insights, training, profile, auth)
 │   │   ├── components/          # 58 UI components (charts, dashboard, upload, insights, nav)
 │   │   ├── engine/              # WebGL/3D engines (glitch, carousel, shaders, simulation, lighting)
 │   │   ├── services/            # API layer (axios httpClient, auth, analysis)
@@ -70,7 +74,7 @@ CSV Upload → Data Profiler → Stats Engine → Visualization Engine → ML Ad
 │   │   ├── core/                # Config, security, exceptions
 │   │   ├── db/                  # SQLite layer
 │   │   ├── schemas/             # Pydantic response models
-│   │   └── services/            # 5 analysis engines + orchestrator
+│   │   └── services/            # 6 analysis engines (incl. ML trainer) + orchestrator
 │   ├── requirements.txt
 │   ├── Dockerfile
 │   └── .env.example
@@ -159,6 +163,14 @@ Both services start with hot-reload enabled. Frontend on port 3000, backend on p
 | POST | `/api/analysis/{session_id}/narrative` | Generate AI narrative summary |
 | GET | `/api/reports` | List all user reports |
 | GET | `/api/users/me/analyses` | Current user's analysis history |
+
+### Training (requires `Authorization: Bearer <token>`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/analysis/{session_id}/train` | Train the recommended model on the session's dataset |
+| GET | `/api/analysis/{session_id}/training` | Get training result for a session |
+| GET | `/api/training/history` | List all training results for current user |
 
 ### Health
 
