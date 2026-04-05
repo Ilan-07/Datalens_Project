@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Trash2, Download, Activity } from "lucide-react";
 import { ProjectSnapshot, useProjectStore } from "@/store/projectStore";
+import { useAnalysisStore } from "@/store/analysisStore";
+import { clearPersistedActiveSession } from "@/services/analysisService";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -11,6 +13,7 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
     const { deleteProject } = useProjectStore();
+    const { analysisData, reset: resetAnalysis } = useAnalysisStore();
 
     const handleExport = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -26,6 +29,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
+        // Clear active analysis if it matches the deleted project
+        if (analysisData?.session_id && project.analysisData?.session_id === analysisData.session_id) {
+            resetAnalysis();
+            clearPersistedActiveSession();
+        }
         deleteProject(project.id);
         toast.info("Project deleted from archive");
     };
