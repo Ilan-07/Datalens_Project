@@ -29,12 +29,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Clear active analysis if it matches the deleted project
-        if (analysisData?.session_id && project.analysisData?.session_id === analysisData.session_id) {
+        deleteProject(project.id);
+
+        // Clear active analysis if it belongs to the deleted project
+        const sessionMatch = analysisData?.session_id && project.analysisData?.session_id === analysisData.session_id;
+        const filenameMatch = analysisData?.filename && project.analysisData?.filename === analysisData.filename;
+        const noProjectsLeft = useProjectStore.getState().projects.length === 0;
+
+        if (sessionMatch || filenameMatch || noProjectsLeft) {
             resetAnalysis();
             clearPersistedActiveSession();
         }
-        deleteProject(project.id);
         toast.info("Project deleted from archive");
     };
 
