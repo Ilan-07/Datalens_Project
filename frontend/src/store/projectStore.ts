@@ -17,6 +17,7 @@ interface ProjectState {
     projects: ProjectSnapshot[];
     saveProject: (analysisData: any) => void;
     deleteProject: (id: string) => void;
+    deleteAllProjects: () => void;
     getProject: (id: string) => ProjectSnapshot | undefined;
 }
 
@@ -53,6 +54,10 @@ export const useProjectStore = create<ProjectState>()(
                 set((state) => ({
                     projects: state.projects.filter((p) => p.id !== id),
                 }));
+            },
+
+            deleteAllProjects: () => {
+                set({ projects: [] });
             },
 
             getProject: (id: string) => {

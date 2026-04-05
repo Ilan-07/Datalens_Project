@@ -9,6 +9,9 @@ import {
   storeToken,
 } from "@/services/auth";
 import { signInWithApi, signOutWithApi, signUpWithApi } from "@/services/authApi";
+import { saveAndClearSessionData, restoreSessionData } from "@/services/sessionData";
+import { useAnalysisStore } from "@/store/analysisStore";
+import { useProjectStore } from "@/store/projectStore";
 
 interface AuthContextValue {
   isLoaded: boolean;
@@ -51,6 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     storeToken(token);
   }, [token]);
 
+  const resetAnalysis = useAnalysisStore((s) => s.reset);
+  const resetProjects = useProjectStore((s) => s.deleteAllProjects);
+
   const value = useMemo<AuthContextValue>(() => {
     const setSession = (nextUser: AuthUser | null, nextToken: string | null) => {
       setUser(nextUser);
@@ -65,14 +71,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn: async (credentials) => {
         const result = await signInWithApi(credentials);
         setSession(result.user, result.token);
+        // Restore this user's previously saved session data
+        restoreSessionData(result.user.id);
+        // Rehydrate zustand stores from the restored localStorage
+        useAnalysisStore.persist.rehydrate();
+        useProjectStore.persist.rehydrate();
         return result.user;
       },
       signUp: async (credentials) => {
         const result = await signUpWithApi(credentials);
         setSession(result.user, result.token);
+        // New user — clear any stale data and start fresh
+        restoreSessionData(result.user.id);
+        useAnalysisStore.persist.rehydrate();
+        useProjectStore.persist.rehydrate();
         return result.user;
       },
       signOut: async () => {
+        // Save current session data under this user's namespace before clearing
+        if (user) {
+          saveAndClearSessionData(user.id);
+        }
+        // Reset in-memory zustand stores so UI goes blank immediately
+        resetAnalysis();
+        resetProjects();
         await signOutWithApi(token);
         setSession(null, null);
       },
@@ -95,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return nextUser;
       },
     };
-  }, [isLoaded, token, user]);
+  }, [isLoaded, token, user, resetAnalysis, resetProjects]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
