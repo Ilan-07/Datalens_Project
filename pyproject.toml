@@ -1,0 +1,17 @@
+[project]
+name = "datalens-backend"
+version = "2.0.0"
+description = "AI-Powered Analytics Platform"
+requires-python = ">=3.10,<3.14"
+
+[tool.pyright]
+venvPath = "backend"
+venv = ".venv"
+include = ["backend"]
+exclude = ["**/node_modules", "**/__pycache__", "**/.venv"]
+pythonVersion = "3.10"
+extraPaths = ["backend"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]

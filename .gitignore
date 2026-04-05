@@ -1,0 +1,41 @@
+# Python
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+.pyre/
+backend/.pyre/
+.venv/
+backend/.venv/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+node_modules/
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local runtime artifacts
+backend/data/sessions/
+backend/data/analysis_results/
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Local secrets and env
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/serviceAccountKey.json

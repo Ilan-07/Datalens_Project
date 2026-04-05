@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Serif+Display:ital@0;1&family=Fredoka:wght@400;500;700&family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap");
+
+:root {
+  --nav-height: 5rem;
+
+  --background: #000000;
+  --foreground: #FFFFFF;
+
+  --color-void: #000000;
+  --color-surface: #0A0A0A;
+  --color-elevated: #111111;
+  --color-border: #1A1A1A;
+
+  --color-spider-red: #B11226;
+  --color-spider-shadow: #5A0E16;
+  --color-accent: #B11226;
+
+  --color-white: #FFFFFF;
+  --color-muted: #888888;
+  --color-dim: #444444;
+
+  --font-display: 'Inter', sans-serif;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-dm-sans: 'DM Sans', sans-serif;
+  --font-dm-serif: 'DM Serif Display', serif;
+  --font-playfair: 'Playfair Display', serif;
+  --font-jetbrains: 'JetBrains Mono', monospace;
+  --font-fredoka: 'Fredoka', sans-serif;
+
+  --radius-xl: 0px;
+  /* Dimensional, blocky feel */
+  --radius-lg: 0px;
+
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Custom Utilities */
+.glass {
+  background: rgba(15, 15, 30, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(42, 42, 74, 0.5);
+}
+
+.glow-purple {
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.2);
+}
