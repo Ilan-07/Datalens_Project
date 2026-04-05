@@ -46,8 +46,8 @@ app = FastAPI(
 )
 
 # ── Exception Handlers ─────────────────────────────────────────────────────────
-app.add_exception_handler(AppException, app_exception_handler)
-app.add_exception_handler(Exception, general_exception_handler)
+app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(Exception, general_exception_handler)  # type: ignore[arg-type]
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
 app.add_middleware(

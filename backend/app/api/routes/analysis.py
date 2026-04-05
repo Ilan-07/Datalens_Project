@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 from app.api.deps import get_current_user
 from app.core.exceptions import NotFoundError, ValidationError
 from app.db import sqlite
-from app.schemas.responses import ReportListResponse
+from app.schemas.responses import ReportListResponse, ReportSummary
 from app.services.orchestrator import AnalysisOrchestrator
 
 router = APIRouter(prefix="/api")
@@ -186,10 +186,10 @@ async def generate_narrative(session_id: str, user: Dict[str, Any] = Depends(get
 @router.get("/reports", response_model=ReportListResponse)
 async def list_reports(user: Dict[str, Any] = Depends(get_current_user)):
     reports = sqlite.list_user_reports(user["id"], limit=20)
-    return ReportListResponse(reports=reports)
+    return ReportListResponse(reports=[ReportSummary(**r) for r in reports])
 
 
 @router.get("/users/me/analyses", response_model=ReportListResponse)
 async def list_my_analyses(user: Dict[str, Any] = Depends(get_current_user)):
     reports = sqlite.list_user_reports(user["id"], limit=100)
-    return ReportListResponse(reports=reports)
+    return ReportListResponse(reports=[ReportSummary(**r) for r in reports])

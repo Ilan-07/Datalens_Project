@@ -52,7 +52,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
                 "message": "An unexpected error occurred processing your request.",
-                "details": str(exc) if "tests" in request.url.path or "localhost" in request.url.hostname else None
+                "details": str(exc) if "tests" in request.url.path or "localhost" in (request.url.hostname or "") else None
             }
         },
     )
