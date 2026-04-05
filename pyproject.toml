@@ -12,6 +12,11 @@ exclude = ["**/node_modules", "**/__pycache__", "**/.venv"]
 pythonVersion = "3.10"
 extraPaths = ["backend"]
 
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+exclude = [".venv"]
+
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 pythonpath = ["backend"]

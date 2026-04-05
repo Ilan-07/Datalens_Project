@@ -92,10 +92,12 @@ def sign_up(payload: AuthCredentials):
     }
     sqlite.create_user(user)
 
+    user_id = user["id"]
+    assert user_id is not None
     token = generate_token("dl")
     sqlite.create_auth_token(
         token=token,
-        user_id=user["id"],
+        user_id=user_id,
         created_at=now_iso,
         expires_at=build_expiry_iso(settings.AUTH_TOKEN_TTL_MINUTES),
     )

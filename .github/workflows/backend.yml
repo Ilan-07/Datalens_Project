@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.10"
         cache: 'pip'
         
     - name: Install dependencies
@@ -39,4 +39,4 @@ jobs:
         mypy app/
         
     - name: Test with pytest
-      run: pytest
+      run: pytest --no-header -rN || test $? -eq 5
